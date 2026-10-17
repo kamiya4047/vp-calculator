@@ -65,11 +65,11 @@ function EditableItemName({ name, fallback, onChange }: { name: string; fallback
   />
 }
 
-function ResultCard({ title, plan, needed, minimum, highlight = false }: {
-  title: string; plan: Plan; needed: number; minimum: number; highlight?: boolean
+function ResultCard({ title, plan, needed, minimum, highlight = false, subdued = false }: {
+  title: string; plan: Plan; needed: number; minimum: number; highlight?: boolean; subdued?: boolean
 }) {
   const extra = plan.price - minimum
-  return <Card role="region" className={`mt-4 !gap-0 !rounded-xl border !p-4 !ring-0 sm:!p-5 ${highlight ? "border-[#ea7479] bg-[linear-gradient(135deg,#1e424d,#15343f)]" : "border-[#45626d] bg-[#123542]"}`} aria-label={title}>
+  return <Card role="region" className={`mt-4 !gap-0 !rounded-xl border !p-4 !ring-0 sm:!p-5 ${highlight ? "border-[#ea7479] bg-[linear-gradient(135deg,#1e424d,#15343f)]" : "border-[#45626d] bg-[#123542]"} ${subdued ? "opacity-70" : ""}`} aria-label={title}>
     <div className="flex items-start justify-between gap-3">
       <h3 className="text-[19px] font-extrabold">{title}</h3>
       {extra > 0 && <span className="whitespace-nowrap rounded-md bg-[#3b4c51] px-2 py-1.5 text-xs font-bold text-[#f6c7c8]">多花 NT$ {format(extra)}</span>}
@@ -148,7 +148,7 @@ export function App() {
             <div className="mb-4 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 rounded-xl border border-[#365964] bg-[#153a48] px-3 py-4 sm:px-5"><div className="flex min-w-0 flex-col gap-1.5"><span className="text-[13px] text-[#a8c0c6]">購買總額</span><strong className="font-display text-[21px] leading-tight font-bold sm:text-[26px]">{format(target)} <small className="block text-xs sm:text-sm">特務幣</small></strong></div><ArrowRight size={20} aria-hidden="true" /><div className="flex min-w-0 flex-col items-end gap-1.5 text-right"><span className="text-[13px] text-[#a8c0c6]">還需要</span><strong className="font-display text-[21px] leading-tight font-bold text-[#8ee5e0] sm:text-[26px]">{format(needed)} <small className="block text-xs sm:text-sm">特務幣</small></strong></div></div>
             {needed === 0 ? <div className="px-5 py-10 text-center"><div className="mx-auto mb-5 grid h-[75px] w-[75px] place-items-center rounded-full border-2 border-[#82ddd5] text-[39px] text-[#9bf0e7]">✓</div><h3 className="mb-2 text-[21px] font-bold">現有特務幣足夠</h3><p className="text-[15px] leading-relaxed text-[#acc4ca]">買完剩 <strong className="text-[#e3f5f3]">{format((current ?? 0) - target)} 特務幣</strong>。</p></div> : result && <>
               <ResultCard title="花費最少" plan={result.cheapest} needed={needed} minimum={result.cheapest.price} highlight />
-              {result.betterValue && <ResultCard title="單價更划算" plan={result.betterValue} needed={needed} minimum={result.cheapest.price} />}
+              <ResultCard title="其他買法" plan={result.alternative} needed={needed} minimum={result.cheapest.price} subdued={!result.betterValue} />
             </>}
           </>}
         </aside>
@@ -158,7 +158,7 @@ export function App() {
         <ol className="list-decimal space-y-2 pl-6 text-sm leading-7 text-[#c2d4d9]">
           <li>輸入目前持有的特務幣。</li>
           <li>填入想買的造型或組合包價格。買多件時，新增商品或調整數量。</li>
-          <li>先看花費最少的組合。加價不超過 NT$200 與最低花費的 10%，而且每元可得的特務幣至少多 5%，才會顯示第二種組合。</li>
+          <li>先看花費最少的組合。下方會列出其他買法；加價較多或單價差異不大時，會以較淡的樣式顯示。</li>
           <li>點「複製分享連結」，就能把目前填好的內容傳給別人。</li>
         </ol>
         <details className="mt-5 rounded-xl border border-[#35525e] bg-[#0d2a38] px-4 py-3 text-sm text-[#b5cbd1]">

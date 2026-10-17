@@ -3,14 +3,14 @@ export const PACKS = [
   { vp: 930, price: 300, base: 920, bonus: 10 },
   { vp: 1600, price: 500, base: 1533, bonus: 67 },
   { vp: 3300, price: 1000, base: 3067, bonus: 233 },
-  { vp: 5050, price: 1500, base: 4569, bonus: 481 },
+  { vp: 5050, price: 1490, base: 4569, bonus: 481 },
   { vp: 10600, price: 3000, base: 9200, bonus: 1400 },
 ] as const
 
 export type Plan = { price: number; vp: number; counts: number[] }
-export type Calculation = { cheapest: Plan; betterValue: Plan | null }
+export type Calculation = { cheapest: Plan; alternative: Plan; betterValue: Plan | null }
 
-const COST_UNIT = 50
+const COST_UNIT = 10
 const MAX_EXTRA_COST = 200
 const MAX_EXTRA_COST_PERCENT = 10
 const MIN_RATE_GAIN_PERCENT = 5
@@ -24,7 +24,7 @@ export function calculatePlans(neededVp: number): Calculation | null {
   })
   const bestPack = PACKS[bestPackIndex]
   const bestPackCount = Math.ceil(neededVp / bestPack.vp)
-  const maxUnits = bestPackCount * bestPack.price / COST_UNIT
+  const maxUnits = (bestPackCount * bestPack.price + PACKS[0].price) / COST_UNIT
   const bestVp = new Float64Array(maxUnits + 1)
   const previousPack = new Int8Array(maxUnits + 1).fill(-1)
   bestVp.fill(-1)
@@ -62,6 +62,22 @@ export function calculatePlans(neededVp: number): Calculation | null {
     }
   }
 
+  let bestMarginalCost = -1
+  let nextBetterRateCost = -1
+  for (let cost = cheapestCost + 1; cost <= maxUnits; cost++) {
+    if ((cost - cheapestCost) * COST_UNIT > MAX_EXTRA_COST) break
+    if (bestVp[cost] <= bestVp[cheapestCost]) continue
+    if (bestMarginalCost < 0 || (bestVp[cost] - bestVp[cheapestCost]) * (bestMarginalCost - cheapestCost) > (bestVp[bestMarginalCost] - bestVp[cheapestCost]) * (cost - cheapestCost)) {
+      bestMarginalCost = cost
+    }
+    if (bestVp[cost] * cheapestCost > bestVp[cheapestCost] * cost) {
+      nextBetterRateCost = cost
+      break
+    }
+  }
+  const alternativeCost = betterCost >= 0 ? betterCost : nextBetterRateCost >= 0 ? nextBetterRateCost : bestMarginalCost
+  if (alternativeCost < 0) throw new Error("找不到其他儲值組合")
+
   function buildPlan(cost: number): Plan {
     const counts = PACKS.map(() => 0)
     let remaining = cost
@@ -76,6 +92,7 @@ export function calculatePlans(neededVp: number): Calculation | null {
 
   return {
     cheapest: buildPlan(cheapestCost),
+    alternative: buildPlan(alternativeCost),
     betterValue: betterCost < 0 ? null : buildPlan(betterCost),
   }
 }
