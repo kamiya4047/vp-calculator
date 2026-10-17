@@ -2,12 +2,14 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/oxanium";
+@import "@fontsource-variable/noto-sans-tc";
 
 @theme {
-  --font-display: "Oxanium Variable", sans-serif;
+  --font-sans: "Oxanium Variable", "Noto Sans TC Variable", "PingFang TC", "Microsoft JhengHei", sans-serif;
+  --font-display: "Oxanium Variable", "Noto Sans TC Variable", "PingFang TC", "Microsoft JhengHei", sans-serif;
 }
 
-:root { font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif; color: #eaf3f5; background: #071b29; font-synthesis: none; }
+:root { font-family: var(--font-sans); color: #eaf3f5; background: #071b29; font-synthesis: none; }
 html { min-width: 320px; }
 body { margin: 0; }
 button:not(:disabled) { cursor: pointer; }
