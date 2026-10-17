@@ -67,7 +67,7 @@ export function App() {
 
       <div className="grid items-start gap-5 pt-5 sm:pt-7 md:grid-cols-[minmax(0,1.07fr)_minmax(0,.93fr)]">
         <section className="min-w-0 rounded-2xl border border-[#3b5964] bg-[#102e3c] p-5 shadow-[0_16px_50px_#03121e30] sm:p-6 lg:p-[30px]" aria-labelledby="input-title">
-          <div className="mb-7 flex items-start gap-3 lg:mb-8"><span className="grid h-10 w-10 flex-none place-items-center rounded-xl border border-[#f2757b] font-display text-[15px] font-bold text-[#ff8c91]">01</span><div><h2 className="text-xl font-extrabold lg:text-[22px]" id="input-title">填入 VP 和商品價格</h2></div></div>
+          <div className="mb-7 flex items-center gap-3 lg:mb-8"><span className="grid h-10 w-10 flex-none place-items-center rounded-xl border border-[#f2757b] font-display text-[15px] font-bold text-[#ff8c91]">01</span><h2 className="text-xl font-extrabold leading-tight lg:text-[22px]" id="input-title">填入 VP 和商品價格</h2></div>
           <div className="mb-8"><Label className="mb-2 text-[15px] font-bold text-[#e9f3f4]" htmlFor="current-vp">目前擁有的 VP</Label><div className="flex h-[54px] w-full items-center gap-2 rounded-[10px] border border-[#53717b] bg-[#173946] px-3.5 text-[#92d3d1] focus-within:border-[#91e2e0] focus-within:ring-[3px] focus-within:ring-[#91e2e02b] has-[input[aria-invalid=true]]:border-[#ff8f93]"><Wallet size={22} aria-hidden="true" /><Input className="!h-full min-w-0 flex-1 !rounded-none !border-0 !bg-transparent !px-0 !text-lg !font-semibold !text-white !shadow-none !outline-none placeholder:!font-normal placeholder:!text-[#83a1aa] focus-visible:!ring-0" id="current-vp" type="number" min="0" max="1000000" step="1" inputMode="numeric" value={currentVp} aria-invalid={current === null} onChange={event => setCurrentVp(event.target.value)} /><span className="font-display text-sm font-bold text-[#aac4ca]">VP</span></div>{current === null && <p className="mt-2 text-[13px] leading-relaxed text-[#ffacb0]">請輸入 0 到 1,000,000 的整數。</p>}</div>
           <div className="mb-3 flex items-baseline justify-between gap-2"><h3 className="text-[17px] font-extrabold">想買的造型或組合包</h3><span className="text-sm text-[#9eb9c0]">{items.length} 項</span></div>
           <div className="grid gap-3">{items.map((item, index) => <Card className="!gap-0 !rounded-xl border border-[#3d5b67] !bg-[#123340] !p-3.5 !ring-0 sm:!p-4" key={item.id}>
@@ -84,7 +84,7 @@ export function App() {
         </section>
 
         <aside className="min-w-0 rounded-2xl border border-[#3b5964] bg-[#0b2836] p-5 shadow-[0_16px_50px_#03121e30] sm:p-6 lg:p-[30px]" aria-live="polite" aria-labelledby="summary-title">
-          <div className="mb-7 flex items-start gap-3 lg:mb-8"><span className="grid h-10 w-10 flex-none place-items-center rounded-xl border border-[#f2757b] font-display text-[15px] font-bold text-[#ff8c91]">02</span><div><h2 className="text-xl font-extrabold lg:text-[22px]" id="summary-title">儲值結果</h2></div></div>
+          <div className="mb-7 flex items-center gap-3 lg:mb-8"><span className="grid h-10 w-10 flex-none place-items-center rounded-xl border border-[#f2757b] font-display text-[15px] font-bold text-[#ff8c91]">02</span><h2 className="text-xl font-extrabold leading-tight lg:text-[22px]" id="summary-title">儲值結果</h2></div>
           {target === 0 ? <div className="flex min-h-[350px] flex-col items-center justify-center rounded-xl border border-dashed border-[#466672] p-8 text-center"><div className="mb-6 grid h-20 w-20 place-items-center rounded-full bg-[#1d4653]"><VpMark /></div><h3 className="mb-2 text-[19px] font-bold">請先輸入商品價格</h3></div> : !valid ? <div className="flex min-h-[350px] flex-col items-center justify-center rounded-xl border border-dashed border-[#466672] p-8 text-center"><h3 className="mb-2 text-[19px] font-bold">請修正上方的數字</h3></div> : <>
             <div className="mb-4 grid grid-cols-[1fr_auto_1fr] items-center gap-2 rounded-xl border border-[#365964] bg-[#153a48] px-3 py-4 sm:px-5"><div className="flex flex-col gap-1.5"><span className="text-[13px] text-[#a8c0c6]">購買總額</span><strong className="whitespace-nowrap font-display text-[21px] font-bold sm:text-[26px]">{format(target)} <small className="text-xs sm:text-sm">VP</small></strong></div><ArrowRight size={20} aria-hidden="true" /><div className="flex flex-col items-end gap-1.5 text-right"><span className="text-[13px] text-[#a8c0c6]">還需要</span><strong className="whitespace-nowrap font-display text-[21px] font-bold text-[#8ee5e0] sm:text-[26px]">{format(needed)} <small className="text-xs sm:text-sm">VP</small></strong></div></div>
             {needed === 0 ? <div className="px-5 py-10 text-center"><div className="mx-auto mb-5 grid h-[75px] w-[75px] place-items-center rounded-full border-2 border-[#82ddd5] text-[39px] text-[#9bf0e7]">✓</div><h3 className="mb-2 text-[21px] font-bold">現有 VP 足夠</h3><p className="text-[15px] leading-relaxed text-[#acc4ca]">買完剩 <strong className="text-[#e3f5f3]">{format((current ?? 0) - target)} VP</strong>。</p></div> : result && <>
@@ -109,7 +109,11 @@ export function App() {
           <p className="mt-3 text-xs leading-relaxed text-[#90afb8]">實際價格請以遊戲內結帳畫面為準。</p>
         </details>
       </section>
-      <footer className="border-t border-[#274653] py-6 text-xs leading-relaxed text-[#8caab4]">此計算器與 Riot Games 無關，僅供試算，無法儲值或付款。</footer>
+      <footer className="border-t border-[#274653] py-6 text-xs leading-relaxed text-[#a7bec5]">
+        <p>本網站僅供試算，無法儲值或付款。</p>
+        <p className="mt-2">特務幣計算器依 Riot Games 的 <a className="underline underline-offset-2 hover:text-white" href="https://www.riotgames.com/en/legal" target="_blank" rel="noopener noreferrer">《Legal Jibber Jabber》政策</a>製作，使用 Riot Games 擁有的素材。Riot Games 未贊助或背書本網站。</p>
+        <p className="mt-2" lang="en">VP Calculator was created under Riot Games' "Legal Jibber Jabber" policy using assets owned by Riot Games. Riot Games does not endorse or sponsor this project.</p>
+      </footer>
     </div>
   </main>
 }
