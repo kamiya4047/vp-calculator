@@ -31,13 +31,15 @@ export function affordableGoal(leftoverVp: number) {
 }
 
 export type Plan = { price: number; vp: number; counts: number[] }
-export type Calculation = { cheapest: Plan; alternative: Plan; betterValue: Plan | null }
+export type Alternative = { plan: Plan; betterValue: boolean }
+export type Calculation = { cheapest: Plan; alternatives: Alternative[] }
 
 const COST_UNIT = 10
 const MAX_EXTRA_COST = 200
 const MAX_GOAL_EXTRA_COST = 500
 const MAX_EXTRA_COST_PERCENT = 10
 const MIN_RATE_GAIN_PERCENT = 5
+const MAX_ALTERNATIVES = 3
 
 export function calculatePlans(neededVp: number): Calculation | null {
   if (!Number.isSafeInteger(neededVp) || neededVp <= 0) return null
@@ -101,8 +103,35 @@ export function calculatePlans(neededVp: number): Calculation | null {
       break
     }
   }
-  const alternativeCost = goalCost >= 0 ? goalCost : nextBetterRateCost >= 0 ? nextBetterRateCost : bestMarginalCost
-  if (alternativeCost < 0) throw new Error("找不到其他儲值組合")
+  const preferredCost = goalCost >= 0 ? goalCost : nextBetterRateCost >= 0 ? nextBetterRateCost : bestMarginalCost
+  if (preferredCost < 0) throw new Error("找不到其他儲值組合")
+
+  // 同樣或更少的特務幣若能用更低的價格取得，就不列出該組合。
+  const candidateCosts: number[] = []
+  let highestVp = bestVp[cheapestCost]
+  for (let cost = cheapestCost + 1; cost <= maxUnits; cost++) {
+    if ((cost - cheapestCost) * COST_UNIT > MAX_GOAL_EXTRA_COST) break
+    if (bestVp[cost] <= highestVp) continue
+    candidateCosts.push(cost)
+    highestVp = bestVp[cost]
+  }
+
+  // 先保留原本的首選，再選價格距離最遠的方案，避免列出幾個幾乎相同的金額。
+  const selectedCosts = [preferredCost]
+  while (selectedCosts.length < MAX_ALTERNATIVES) {
+    let nextCost = -1
+    let widestGap = -1
+    for (const cost of candidateCosts) {
+      if (selectedCosts.includes(cost)) continue
+      const gap = Math.min(...selectedCosts.map(selected => Math.abs(cost - selected)))
+      if (gap > widestGap || (gap === widestGap && cost < nextCost)) {
+        nextCost = cost
+        widestGap = gap
+      }
+    }
+    if (nextCost < 0) break
+    selectedCosts.push(nextCost)
+  }
 
   function buildPlan(cost: number): Plan {
     const counts = PACKS.map(() => 0)
@@ -117,11 +146,16 @@ export function calculatePlans(neededVp: number): Calculation | null {
   }
 
   const cheapest = buildPlan(cheapestCost)
-  const alternative = buildPlan(alternativeCost)
-  const extra = alternative.price - cheapest.price
-  const betterValue = extra <= MAX_EXTRA_COST
-    && alternative.price * 100 <= cheapest.price * (100 + MAX_EXTRA_COST_PERCENT)
-    && alternative.vp * cheapest.price * 100 >= cheapest.vp * alternative.price * (100 + MIN_RATE_GAIN_PERCENT)
+  const alternatives = selectedCosts.sort((a, b) => a - b).map(cost => {
+    const plan = buildPlan(cost)
+    const extra = plan.price - cheapest.price
+    return {
+      plan,
+      betterValue: extra <= MAX_EXTRA_COST
+        && plan.price * 100 <= cheapest.price * (100 + MAX_EXTRA_COST_PERCENT)
+        && plan.vp * cheapest.price * 100 >= cheapest.vp * plan.price * (100 + MIN_RATE_GAIN_PERCENT),
+    }
+  })
 
-  return { cheapest, alternative, betterValue: betterValue ? alternative : null }
+  return { cheapest, alternatives }
 }
