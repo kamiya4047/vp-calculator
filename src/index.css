@@ -14,13 +14,4 @@ button:not(:disabled) { cursor: pointer; }
 input[type=number] { appearance: textfield; -moz-appearance: textfield; }
 input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 :focus-visible { outline: 3px solid #88d9dd; outline-offset: 3px; }
-.vp-mark { position: relative; display: inline-flex; flex: none; align-items: center; justify-content: center; width: 35px; height: 35px; background: #f36c72; clip-path: polygon(8% 6%, 44% 6%, 50% 45%, 56% 6%, 92% 6%, 79% 72%, 50% 94%, 21% 72%); }
-.vp-mark span { position: absolute; top: 5px; left: 50%; width: 5px; height: 19px; background: #071c2b; transform: translateX(-50%); clip-path: polygon(30% 0, 70% 0, 100% 100%, 0 100%); }
-.vp-mark-small { width: 19px; height: 19px; }
-.vp-mark-small span { top: 3px; width: 3px; height: 10px; }
-.intro-decoration .vp-mark { width: 105px; height: 105px; filter: drop-shadow(0 0 25px #f36c7255); }
-.intro-decoration .vp-mark span { top: 16px; width: 13px; height: 58px; }
-.radar-ring { position: absolute; border: 1px solid #5a8b99; border-radius: 50%; }
-.radar-ring-outer { width: 258px; height: 258px; border-style: dashed; opacity: .45; }
-.radar-ring-inner { width: 192px; height: 192px; box-shadow: 0 0 0 16px #1d4c5940, 0 0 0 45px #0b2a3840; opacity: .8; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }

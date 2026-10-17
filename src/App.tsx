@@ -15,7 +15,7 @@ const parseNumber = (value: string) => {
 }
 
 function VpMark({ small = false }: { small?: boolean }) {
-  return <span className={small ? "vp-mark vp-mark-small" : "vp-mark"} aria-label="VP" role="img"><span /></span>
+  return <img src={`${import.meta.env.BASE_URL}valorant-points.png`} alt={small ? "" : "VP 圖示"} className={small ? "h-5 w-5 flex-none object-contain" : "h-9 w-9 flex-none object-contain"} />
 }
 
 function ResultCard({ title, plan, needed, minimum, highlight = false }: {
@@ -61,16 +61,11 @@ export function App() {
     setNextId(previous => previous + 1)
   }
 
-  return <main className="relative min-h-screen overflow-hidden bg-[linear-gradient(155deg,#071c2b_0%,#0b2634_50%,#071b28_100%)] text-[#eaf3f5]">
-    <div className="pointer-events-none absolute -right-24 -top-44 h-[500px] w-[500px] rounded-full bg-[#30c9bd]/20 blur-[95px]" aria-hidden="true" /><div className="pointer-events-none absolute -left-64 top-[470px] h-[380px] w-[380px] rounded-full bg-[#e76168]/10 blur-[95px]" aria-hidden="true" />
+  return <main className="min-h-screen bg-[#071b29] text-[#eaf3f5]">
     <div className="relative mx-auto max-w-[1300px] px-3.5 sm:px-5 lg:px-8">
-      <header className="flex min-h-[66px] items-center justify-between border-b border-[#2b4752] sm:min-h-[72px] lg:min-h-[86px]"><div className="flex items-center gap-2 text-base font-extrabold tracking-wide sm:text-lg"><VpMark /><span>特務幣計算器</span></div><span className="hidden font-display text-[13px] font-semibold tracking-widest text-[#9fb5bd] sm:block">VALORANT VP × 新臺幣</span></header>
-      <section className="flex items-center justify-between gap-7">
-        <div className="max-w-[690px] px-1 py-10 sm:py-12 lg:py-14"><p className="mb-4 text-sm font-bold tracking-widest text-[#f5757c]">儲值前，先算清楚</p><h1 className="text-[clamp(34px,5vw,64px)] leading-[1.18] font-black tracking-tight">想買的造型，<br /><span className="text-[#8ee5e0]">怎麼儲最剛好？</span></h1><p className="mt-5 text-[15px] leading-7 text-[#afc4ca] sm:text-[17px]">填入目前的 VP 和購物清單，立即比較最低花費與更划算的儲值組合。</p></div>
-        <div className="intro-decoration relative hidden h-[260px] w-[260px] flex-none rotate-[-14deg] place-items-center lg:grid" aria-hidden="true"><div className="radar-ring radar-ring-outer" /><div className="radar-ring radar-ring-inner" /><VpMark /></div>
-      </section>
+      <header className="flex min-h-[66px] items-center border-b border-[#2b4752] sm:min-h-[72px]"><h1 className="flex items-center gap-2.5 text-lg font-extrabold"><VpMark />特務幣計算器</h1></header>
 
-      <div className="grid items-start gap-5 md:grid-cols-[minmax(0,1.07fr)_minmax(0,.93fr)]">
+      <div className="grid items-start gap-5 pt-5 sm:pt-7 md:grid-cols-[minmax(0,1.07fr)_minmax(0,.93fr)]">
         <section className="min-w-0 rounded-2xl border border-[#3b5964] bg-[#102e3c] p-5 shadow-[0_16px_50px_#03121e30] sm:p-6 lg:p-[30px]" aria-labelledby="input-title">
           <div className="mb-7 flex items-start gap-3 lg:mb-8"><span className="grid h-10 w-10 flex-none place-items-center rounded-xl border border-[#f2757b] font-display text-[15px] font-bold text-[#ff8c91]">01</span><div><h2 className="text-xl font-extrabold lg:text-[22px]" id="input-title">填入你的購買計畫</h2><p className="mt-1 text-[13px] leading-relaxed text-[#a7bdc4]">加入多個商品，會一起計算最省的儲值方式。</p></div></div>
           <div className="mb-8"><Label className="mb-2 text-[15px] font-bold text-[#e9f3f4]" htmlFor="current-vp">目前擁有的 VP</Label><div className="flex h-[54px] w-full items-center gap-2 rounded-[10px] border border-[#53717b] bg-[#173946] px-3.5 text-[#92d3d1] focus-within:border-[#91e2e0] focus-within:ring-[3px] focus-within:ring-[#91e2e02b] has-[input[aria-invalid=true]]:border-[#ff8f93]"><Wallet size={22} aria-hidden="true" /><Input className="!h-full min-w-0 flex-1 !rounded-none !border-0 !bg-transparent !px-0 !text-lg !font-semibold !text-white !shadow-none !outline-none placeholder:!font-normal placeholder:!text-[#83a1aa] focus-visible:!ring-0" id="current-vp" type="number" min="0" max="1000000" step="1" inputMode="numeric" value={currentVp} aria-invalid={current === null} onChange={event => setCurrentVp(event.target.value)} /><span className="font-display text-sm font-bold text-[#aac4ca]">VP</span></div>{current === null && <p className="mt-2 text-[13px] leading-relaxed text-[#ffacb0]">請輸入 0 到 1,000,000 的整數。</p>}</div>
@@ -101,7 +96,19 @@ export function App() {
           </>}
         </aside>
       </div>
-      <section className="py-12" aria-labelledby="rates-title"><div className="mb-5"><h2 className="mb-2 text-[21px] font-extrabold" id="rates-title">台灣商店儲值面額</h2><p className="text-sm leading-relaxed text-[#a9bec5]">依你提供的遊戲商店畫面建立。實際結帳金額請以遊戲內顯示為準。</p></div><div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">{PACKS.map(pack => <div className="flex flex-col gap-1.5 rounded-[10px] border border-[#35525e] bg-[#0d2a38] p-3 sm:p-4" key={pack.vp}><div className="flex items-center gap-2 whitespace-nowrap"><VpMark small /><strong className="font-display text-sm font-bold sm:text-base">{format(pack.vp)} VP</strong></div><span className="font-display text-sm font-semibold text-[#e6f1f2] sm:text-[15px]">NT$ {format(pack.price)}</span><small className="text-[11px] leading-relaxed text-[#90afb8]">{pack.bonus > 0 ? `含額外獎勵 ${format(pack.bonus)} VP` : "無額外獎勵"}</small></div>)}</div></section>
+      <section className="py-10 sm:py-12" aria-labelledby="how-to-title">
+        <h2 className="mb-4 text-xl font-extrabold" id="how-to-title">使用方式</h2>
+        <ol className="grid gap-3 text-sm leading-7 text-[#c2d4d9] sm:grid-cols-3">
+          <li className="rounded-xl border border-[#35525e] bg-[#0d2a38] p-4"><strong className="mb-1 block text-base text-white">1. 填入現有 VP</strong>輸入目前帳號裡的特務幣。</li>
+          <li className="rounded-xl border border-[#35525e] bg-[#0d2a38] p-4"><strong className="mb-1 block text-base text-white">2. 加入想買的商品</strong>輸入造型或組合包價格；買多件可新增商品或調整數量。</li>
+          <li className="rounded-xl border border-[#35525e] bg-[#0d2a38] p-4"><strong className="mb-1 block text-base text-white">3. 比較儲值方案</strong>先看最低花費，也可調整加價上限，比較每元能買到更多 VP 的組合。</li>
+        </ol>
+        <details className="mt-5 rounded-xl border border-[#35525e] bg-[#0d2a38] px-4 py-3 text-sm text-[#b5cbd1]">
+          <summary className="cursor-pointer font-bold text-[#eaf3f5]">查看計算使用的台灣商店面額</summary>
+          <ul className="mt-3 grid gap-x-6 gap-y-1 sm:grid-cols-2 lg:grid-cols-3">{PACKS.map(pack => <li key={pack.vp}>{format(pack.vp)} VP＝NT$ {format(pack.price)}</li>)}</ul>
+          <p className="mt-3 text-xs leading-relaxed text-[#90afb8]">依你提供的商店資訊建立；實際價格請以遊戲內結帳畫面為準。</p>
+        </details>
+      </section>
       <footer className="border-t border-[#274653] py-6 text-xs leading-relaxed text-[#8caab4]">非 Riot Games 官方網站。此工具僅協助試算，未提供儲值或付款服務。</footer>
     </div>
   </main>
