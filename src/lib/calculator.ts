@@ -11,7 +11,8 @@ export type Plan = { price: number; vp: number; counts: number[] }
 export type Calculation = { cheapest: Plan; betterValue: Plan | null }
 
 const COST_UNIT = 50
-const MAX_EXTRA_COST_PERCENT = 25
+const MAX_EXTRA_COST = 200
+const MAX_EXTRA_COST_PERCENT = 10
 const MIN_RATE_GAIN_PERCENT = 5
 
 export function calculatePlans(neededVp: number): Calculation | null {
@@ -52,6 +53,7 @@ export function calculatePlans(neededVp: number): Calculation | null {
 
   let betterCost = -1
   for (let cost = cheapestCost + 1; cost <= maxUnits; cost++) {
+    if ((cost - cheapestCost) * COST_UNIT > MAX_EXTRA_COST) break
     if (cost * 100 > cheapestCost * (100 + MAX_EXTRA_COST_PERCENT)) break
     if (bestVp[cost] < neededVp) continue
     if (bestVp[cost] * cheapestCost * 100 >= bestVp[cheapestCost] * cost * (100 + MIN_RATE_GAIN_PERCENT)) {

@@ -21,9 +21,22 @@ describe("儲值組合", () => {
     assert.equal(result?.betterValue, null)
   })
 
-  it("略有提升的組合不顯示，改找加價合理且提升明顯的組合", () => {
+  it("加價 550 元即使單價提升明顯也不顯示", () => {
     const result = calculatePlans(8000)
     assert.equal(result?.cheapest.price, 2450)
+    assert.equal(result?.betterValue, null)
+  })
+
+  it("加價 200 元且單價提升明顯時顯示第二種組合", () => {
+    const result = calculatePlans(9000)
+    assert.equal(result?.cheapest.price, 2800)
+    assert.deepEqual(result?.betterValue, { price: 3000, vp: 10600, counts: [0, 0, 0, 0, 0, 1] })
+  })
+
+  it("9500 VP 只需多花 50 元時顯示 10600 VP 面額", () => {
+    const result = calculatePlans(9500)
+    assert.equal(result?.cheapest.price, 2950)
+    assert.equal(result?.cheapest.vp, 9740)
     assert.deepEqual(result?.betterValue, { price: 3000, vp: 10600, counts: [0, 0, 0, 0, 0, 1] })
   })
 

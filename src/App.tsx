@@ -96,7 +96,7 @@ export function App() {
         <ol className="list-decimal space-y-2 pl-6 text-sm leading-7 text-[#c2d4d9]">
           <li>輸入目前持有的 VP。</li>
           <li>填入想買的造型或組合包價格。買多件時，新增商品或調整數量。</li>
-          <li>先看花費最少的組合。只有加價不超過 25%、每元 VP 至少增加 5%，才會顯示第二種組合。</li>
+          <li>先看花費最少的組合。加價不超過 NT$200 與最低花費的 10%，而且每元 VP 至少多 5%，才會顯示第二種組合。</li>
         </ol>
         <details className="mt-5 rounded-xl border border-[#35525e] bg-[#0d2a38] px-4 py-3 text-sm text-[#b5cbd1]">
           <summary className="cursor-pointer font-bold text-[#eaf3f5]">台灣商店儲值面額</summary>
