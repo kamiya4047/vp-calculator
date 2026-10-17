@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react"
-import { ArrowRight, Link2, Minus, Plus, Trash2, Wallet } from "lucide-react"
+import { ArrowRight, Link2, Minus, Plus, RotateCcw, Trash2, Wallet } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -120,6 +120,14 @@ export function App() {
       setCopyError(true)
     }
   }
+  function resetCalculator() {
+    setCurrentVp("0")
+    setItems([{ id: 1, name: "", price: "", quantity: 1 }])
+    setNextId(2)
+    setCopiedUrl(null)
+    setCopyError(false)
+    window.history.replaceState(window.history.state, "", window.location.pathname + window.location.hash)
+  }
 
   return <main className="min-h-screen bg-[#071b29] text-[#eaf3f5]">
     <div className="relative mx-auto max-w-[1300px] px-3.5 sm:px-5 lg:px-8">
@@ -141,6 +149,7 @@ export function App() {
           {target > 1_000_000 && <p className="mt-2 text-[13px] leading-relaxed text-[#ffacb0]">購買總額最多可計算 1,000,000 特務幣。</p>}
           <Button type="button" variant="outline" className="mt-4 !h-[53px] w-full !rounded-[10px] !border !border-dashed !border-[#6b929a] !bg-[#123744] !text-[15px] !font-bold !text-[#a9e1df] hover:!bg-[#1b4853]" onClick={addItem}><Plus size={20} />加入另一件商品</Button>
           <Button type="button" variant="outline" className="mt-3 !h-[53px] w-full !rounded-[10px] !border-[#6b929a] !bg-[#19424d] !text-[15px] !font-bold !text-[#eaf3f5] hover:!bg-[#255460]" disabled={!shareUrl} onClick={copyShareLink}><Link2 size={19} /><span aria-live="polite">{copiedUrl && copiedUrl === shareUrl ? "已複製分享連結" : "複製分享連結"}</span></Button>
+          <Button type="button" variant="ghost" className="mt-2 !h-12 w-full !rounded-[10px] !text-[15px] !font-bold !text-[#aac4ca] hover:!bg-[#1b4853] hover:!text-[#eaf3f5]" onClick={resetCalculator}><RotateCcw size={18} />重設</Button>
           {copyError && shareUrl && <div className="mt-3"><Label className="mb-1.5 text-sm text-[#b9d3d8]" htmlFor="share-url">無法自動複製，請手動複製連結</Label><Input id="share-url" value={shareUrl} readOnly onFocus={event => event.currentTarget.select()} className="!h-11 !border-[#53717b] !bg-[#173946] !text-sm !text-white" /></div>}
         </section>
 
