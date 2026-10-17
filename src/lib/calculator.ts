@@ -12,11 +12,16 @@ export type Calculation = { cheapest: Plan; bestValue: Plan }
 
 const COST_UNIT = 50
 
-export function calculatePlans(neededVp: number, extraBudget: number): Calculation | null {
+export function calculatePlans(neededVp: number): Calculation | null {
   if (!Number.isSafeInteger(neededVp) || neededVp <= 0) return null
 
-  const upperBound = Math.ceil(neededVp / 10600) * 3000
-  const maxUnits = (upperBound + Math.max(0, Math.floor(extraBudget / COST_UNIT) * COST_UNIT)) / COST_UNIT
+  let bestPackIndex = 0
+  PACKS.forEach((pack, index) => {
+    if (pack.vp * PACKS[bestPackIndex].price > PACKS[bestPackIndex].vp * pack.price) bestPackIndex = index
+  })
+  const bestPack = PACKS[bestPackIndex]
+  const bestPackCount = Math.ceil(neededVp / bestPack.vp)
+  const maxUnits = bestPackCount * bestPack.price / COST_UNIT
   const bestVp = new Float64Array(maxUnits + 1)
   const previousPack = new Int8Array(maxUnits + 1).fill(-1)
   bestVp.fill(-1)
@@ -43,13 +48,6 @@ export function calculatePlans(neededVp: number, extraBudget: number): Calculati
   }
   if (cheapestCost < 0) return null
 
-  const valueLimit = Math.min(maxUnits, cheapestCost + Math.max(0, Math.floor(extraBudget / COST_UNIT)))
-  let valueCost = cheapestCost
-  for (let cost = cheapestCost + 1; cost <= valueLimit; cost++) {
-    if (bestVp[cost] < neededVp) continue
-    if (bestVp[cost] * valueCost > bestVp[valueCost] * cost) valueCost = cost
-  }
-
   function buildPlan(cost: number): Plan {
     const counts = PACKS.map(() => 0)
     let remaining = cost
@@ -62,5 +60,12 @@ export function calculatePlans(neededVp: number, extraBudget: number): Calculati
     return { price: cost * COST_UNIT, vp: bestVp[cost], counts }
   }
 
-  return { cheapest: buildPlan(cheapestCost), bestValue: buildPlan(valueCost) }
+  return {
+    cheapest: buildPlan(cheapestCost),
+    bestValue: {
+      price: bestPackCount * bestPack.price,
+      vp: bestPackCount * bestPack.vp,
+      counts: PACKS.map((_, index) => index === bestPackIndex ? bestPackCount : 0),
+    },
+  }
 }

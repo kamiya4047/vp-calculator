@@ -42,15 +42,13 @@ export function App() {
   const [currentVp, setCurrentVp] = useState("0")
   const [items, setItems] = useState<Item[]>([{ id: 1, name: "", price: "", quantity: 1 }])
   const [nextId, setNextId] = useState(2)
-  const [extraBudget, setExtraBudget] = useState("500")
   const current = parseNumber(currentVp)
-  const extra = parseNumber(extraBudget)
   const entries = items.map(item => ({ ...item, parsedPrice: parseNumber(item.price) }))
   const hasInvalidPrice = entries.some(item => item.price !== "" && (item.parsedPrice === null || item.parsedPrice === 0))
   const target = entries.reduce((sum, item) => sum + (item.parsedPrice ?? 0) * item.quantity, 0)
   const needed = current === null ? 0 : Math.max(0, target - current)
   const valid = current !== null && !hasInvalidPrice && target <= 1_000_000
-  const result = useMemo(() => valid && needed > 0 ? calculatePlans(needed, extra ?? 0) : null, [valid, needed, extra])
+  const result = useMemo(() => valid && needed > 0 ? calculatePlans(needed) : null, [valid, needed])
   const valueDifferent = result && result.bestValue.price !== result.cheapest.price
 
   function updateItem(id: number, patch: Partial<Item>) {
@@ -89,9 +87,7 @@ export function App() {
             <div className="mb-4 grid grid-cols-[1fr_auto_1fr] items-center gap-2 rounded-xl border border-[#365964] bg-[#153a48] px-3 py-4 sm:px-5"><div className="flex flex-col gap-1.5"><span className="text-[13px] text-[#a8c0c6]">購買總額</span><strong className="whitespace-nowrap font-display text-[21px] font-bold sm:text-[26px]">{format(target)} <small className="text-xs sm:text-sm">VP</small></strong></div><ArrowRight size={20} aria-hidden="true" /><div className="flex flex-col items-end gap-1.5 text-right"><span className="text-[13px] text-[#a8c0c6]">還需要</span><strong className="whitespace-nowrap font-display text-[21px] font-bold text-[#8ee5e0] sm:text-[26px]">{format(needed)} <small className="text-xs sm:text-sm">VP</small></strong></div></div>
             {needed === 0 ? <div className="px-5 py-10 text-center"><div className="mx-auto mb-5 grid h-[75px] w-[75px] place-items-center rounded-full border-2 border-[#82ddd5] text-[39px] text-[#9bf0e7]">✓</div><h3 className="mb-2 text-[21px] font-bold">現有 VP 足夠</h3><p className="text-[15px] leading-relaxed text-[#acc4ca]">買完剩 <strong className="text-[#e3f5f3]">{format((current ?? 0) - target)} VP</strong>。</p></div> : result && <>
               <ResultCard title="花費最少" plan={result.cheapest} needed={needed} minimum={result.cheapest.price} highlight />
-              <div className="mt-6 flex items-start justify-between gap-3"><div><Label className="mb-2 text-[15px] font-bold text-[#e9f3f4]" htmlFor="extra-budget">最多願意多花</Label></div><div className="flex h-11 w-[119px] flex-none items-center rounded-[10px] border border-[#53717b] bg-[#173946] px-2.5 text-[#adc8ce] focus-within:border-[#91e2e0] focus-within:ring-[3px] focus-within:ring-[#91e2e02b]"><span className="text-xs">NT$</span><Input className="!h-full min-w-0 !rounded-none !border-0 !bg-transparent !p-0 !text-right !font-display !text-[17px] !font-bold !text-white !shadow-none focus-visible:!ring-0" id="extra-budget" type="number" min="0" max="1000000" step="50" inputMode="numeric" value={extraBudget} aria-invalid={extra === null} onChange={event => setExtraBudget(event.target.value)} /></div></div>
-              {extra === null && <p className="mt-2 text-[13px] leading-relaxed text-[#ffacb0]">請輸入 0 到 1,000,000 元的整數。</p>}
-              {extra !== null && (valueDifferent ? <ResultCard title="每元可得最多 VP" plan={result.bestValue} needed={needed} minimum={result.cheapest.price} /> : <div className="mt-4 rounded-[10px] border border-[#3d646c] bg-[#153b46] px-4 py-3.5 text-sm leading-relaxed text-[#b9d8da]">這個上限內沒有每元可得更多 VP 的組合。</div>)}
+              {valueDifferent && <ResultCard title="每元可得最多 VP" plan={result.bestValue} needed={needed} minimum={result.cheapest.price} />}
             </>}
           </>}
         </aside>
@@ -101,7 +97,7 @@ export function App() {
         <ol className="list-decimal space-y-2 pl-6 text-sm leading-7 text-[#c2d4d9]">
           <li>輸入目前持有的 VP。</li>
           <li>填入想買的造型或組合包價格。買多件時，新增商品或調整數量。</li>
-          <li>查看花費最少的組合，也可以設定最多願意多花多少。</li>
+          <li>比較花費最少與每元可得最多 VP 的儲值組合。</li>
         </ol>
         <details className="mt-5 rounded-xl border border-[#35525e] bg-[#0d2a38] px-4 py-3 text-sm text-[#b5cbd1]">
           <summary className="cursor-pointer font-bold text-[#eaf3f5]">台灣商店儲值面額</summary>
