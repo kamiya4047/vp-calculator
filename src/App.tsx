@@ -10,8 +10,8 @@ import { createShareUrl, parseVpNumber, readShareQuery, type ShareItem } from "@
 type Item = ShareItem & { id: number }
 const format = (value: number) => new Intl.NumberFormat("zh-TW").format(value)
 
-function VpMark({ small = false }: { small?: boolean }) {
-  return <img src={`${import.meta.env.BASE_URL}valorant-points.png`} alt={small ? "" : "特務幣圖示"} className={small ? "h-5 w-5 flex-none object-contain" : "h-9 w-9 flex-none object-contain"} />
+function VpMark({ small = false, className = "" }: { small?: boolean; className?: string }) {
+  return <img src={`${import.meta.env.BASE_URL}valorant-points.png`} alt={small ? "" : "特務幣圖示"} className={`${small ? "h-5 w-5" : "h-9 w-9"} flex-none object-contain ${className}`} />
 }
 
 function EditableItemName({ name, fallback, onChange }: { name: string; fallback: string; onChange: (name: string) => void }) {
@@ -80,7 +80,7 @@ function ResultCard({ title, plan, needed, minimum, highlight = false, subdued =
     {goal && <p className="mt-3 rounded-md bg-[#244854] px-3 py-2 text-sm leading-relaxed text-[#d9eeec]">餘額達到 {goal.label}的常見價位（約 {format(goal.vp)} 特務幣）</p>}
     <div className="divide-y divide-[#35535f]" aria-label="需要購買的儲值面額">
       {PACKS.map((pack, index) => plan.counts[index] > 0 && <div className="flex flex-wrap items-center justify-between gap-x-2.5 gap-y-1 py-3 font-display text-[15px] font-semibold text-[#e4f0f1]" key={pack.vp}>
-        <span className="inline-flex items-center gap-2"><VpMark small />{format(pack.vp)} 特務幣 <span className="text-[#a8c2c8]">× {plan.counts[index]}</span></span>
+        <span className="inline-flex items-center gap-2"><VpMark small className="-translate-y-0.5" />{format(pack.vp)} 特務幣 <span className="text-[#a8c2c8]">× {plan.counts[index]}</span></span>
         <span>NT$ {format(pack.price * plan.counts[index])}</span>
       </div>)}
     </div>
@@ -131,7 +131,7 @@ export function App() {
 
   return <main className="min-h-screen bg-[#071b29] text-[#eaf3f5]">
     <div className="relative mx-auto max-w-[1300px] px-3.5 sm:px-5 lg:px-8">
-      <header className="flex min-h-[66px] items-center border-b border-[#2b4752] sm:min-h-[72px]"><h1 className="flex items-center gap-2.5 text-lg font-extrabold"><VpMark />特務幣計算器</h1></header>
+      <header className="flex min-h-[66px] items-center border-b border-[#2b4752] sm:min-h-[72px]"><h1 className="flex items-center gap-2.5 text-lg font-extrabold"><VpMark className="-translate-y-0.5" />特務幣計算器</h1></header>
 
       <div className="grid items-start gap-5 pt-5 sm:pt-7 md:grid-cols-[minmax(0,1.07fr)_minmax(0,.93fr)]">
         <section className="min-w-0 rounded-2xl border border-[#3b5964] bg-[#102e3c] p-5 shadow-[0_16px_50px_#03121e30] sm:p-6 lg:p-[30px]" aria-labelledby="input-title">
@@ -148,8 +148,8 @@ export function App() {
           {hasInvalidPrice && <p className="mt-2 text-[13px] leading-relaxed text-[#ffacb0]">商品價格請填入 1 到 1,000,000 的整數特務幣。</p>}
           {target > 1_000_000 && <p className="mt-2 text-[13px] leading-relaxed text-[#ffacb0]">購買總額最多可計算 1,000,000 特務幣。</p>}
           <Button type="button" variant="outline" className="mt-4 !h-[53px] w-full !rounded-[10px] !border !border-dashed !border-[#6b929a] !bg-[#123744] !text-[15px] !font-bold !text-[#a9e1df] hover:!bg-[#1b4853]" onClick={addItem}><Plus className="-translate-y-0.5" size={20} />加入另一件商品</Button>
-          <Button type="button" variant="outline" className="mt-3 !h-[53px] w-full !rounded-[10px] !border-[#6b929a] !bg-[#19424d] !text-[15px] !font-bold !text-[#eaf3f5] hover:!bg-[#255460]" disabled={!shareUrl} onClick={copyShareLink}><Link2 size={19} /><span aria-live="polite">{copiedUrl && copiedUrl === shareUrl ? "已複製分享連結" : "複製分享連結"}</span></Button>
-          <Button type="button" variant="ghost" className="mt-2 !h-12 w-full !rounded-[10px] !text-[15px] !font-bold !text-[#aac4ca] hover:!bg-[#1b4853] hover:!text-[#eaf3f5]" onClick={resetCalculator}><RotateCcw size={18} />重設</Button>
+          <Button type="button" variant="outline" className="mt-3 !h-[53px] w-full !rounded-[10px] !border-[#6b929a] !bg-[#19424d] !text-[15px] !font-bold !text-[#eaf3f5] hover:!bg-[#255460]" disabled={!shareUrl} onClick={copyShareLink}><Link2 className="-translate-y-0.5" size={19} /><span aria-live="polite">{copiedUrl && copiedUrl === shareUrl ? "已複製分享連結" : "複製分享連結"}</span></Button>
+          <Button type="button" variant="ghost" className="mt-2 !h-12 w-full !rounded-[10px] !text-[15px] !font-bold !text-[#aac4ca] hover:!bg-[#1b4853] hover:!text-[#eaf3f5]" onClick={resetCalculator}><RotateCcw className="-translate-y-0.5" size={18} />重設</Button>
           {copyError && shareUrl && <div className="mt-3"><Label className="mb-1.5 text-sm text-[#b9d3d8]" htmlFor="share-url">無法自動複製，請手動複製連結</Label><Input id="share-url" value={shareUrl} readOnly onFocus={event => event.currentTarget.select()} className="!h-11 !border-[#53717b] !bg-[#173946] !text-sm !text-white" /></div>}
         </section>
 
