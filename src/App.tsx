@@ -1,21 +1,68 @@
-import { useMemo, useState } from "react"
-import { ArrowRight, Minus, Plus, Trash2, Wallet } from "lucide-react"
+import { useEffect, useMemo, useRef, useState } from "react"
+import { ArrowRight, Link2, Minus, Plus, Trash2, Wallet } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card } from "@/components/ui/card"
 import { calculatePlans, PACKS, type Plan } from "@/lib/calculator"
+import { createShareUrl, parseVpNumber, readShareQuery, type ShareItem } from "@/lib/share"
 
-type Item = { id: number; name: string; price: string; quantity: number }
+type Item = ShareItem & { id: number }
 const format = (value: number) => new Intl.NumberFormat("zh-TW").format(value)
-const parseNumber = (value: string) => {
-  if (!/^\d+$/.test(value)) return null
-  const number = Number(value)
-  return Number.isSafeInteger(number) && number <= 1_000_000 ? number : null
-}
 
 function VpMark({ small = false }: { small?: boolean }) {
   return <img src={`${import.meta.env.BASE_URL}valorant-points.png`} alt={small ? "" : "VP 圖示"} className={small ? "h-5 w-5 flex-none object-contain" : "h-9 w-9 flex-none object-contain"} />
+}
+
+function EditableItemName({ name, fallback, onChange }: { name: string; fallback: string; onChange: (name: string) => void }) {
+  const element = useRef<HTMLSpanElement>(null)
+  useEffect(() => {
+    if (element.current && document.activeElement !== element.current && element.current.textContent !== name) element.current.textContent = name
+  }, [name])
+
+  return <span
+    ref={element}
+    contentEditable
+    role="textbox"
+    aria-label={`${fallback}名稱（選填）`}
+    aria-multiline="false"
+    data-placeholder={fallback}
+    className="block min-h-10 min-w-0 flex-1 cursor-text rounded-md px-2 py-2 text-[15px] leading-6 font-bold text-[#91d7d4] hover:bg-[#ffffff0a] focus:bg-[#173946] focus:outline-2 focus:outline-[#88d9dd] empty:before:text-[#91d7d4] empty:before:content-[attr(data-placeholder)]"
+    onInput={event => {
+      const value = event.currentTarget.textContent ?? ""
+      if (!value) event.currentTarget.replaceChildren()
+      onChange(value)
+    }}
+    onBlur={event => {
+      const value = (event.currentTarget.textContent ?? "").trim()
+      event.currentTarget.textContent = value
+      if (value !== name) onChange(value)
+    }}
+    onKeyDown={event => {
+      if (event.key === "Enter") {
+        event.preventDefault()
+        event.currentTarget.blur()
+      }
+    }}
+    onPaste={event => {
+      event.preventDefault()
+      const text = event.clipboardData.getData("text/plain").replace(/[\r\n]+/g, " ")
+      const selection = window.getSelection()
+      if (!selection?.rangeCount) return
+      const range = selection.getRangeAt(0)
+      if (!event.currentTarget.contains(range.commonAncestorContainer)) return
+      range.deleteContents()
+      const node = document.createTextNode(text)
+      range.insertNode(node)
+      range.setStartAfter(node)
+      range.collapse(true)
+      selection.removeAllRanges()
+      selection.addRange(range)
+      const value = event.currentTarget.textContent ?? ""
+      if (!value) event.currentTarget.replaceChildren()
+      onChange(value)
+    }}
+  />
 }
 
 function ResultCard({ title, plan, needed, minimum, highlight = false }: {
@@ -39,16 +86,20 @@ function ResultCard({ title, plan, needed, minimum, highlight = false }: {
 }
 
 export function App() {
-  const [currentVp, setCurrentVp] = useState("0")
-  const [items, setItems] = useState<Item[]>([{ id: 1, name: "", price: "", quantity: 1 }])
-  const [nextId, setNextId] = useState(2)
-  const current = parseNumber(currentVp)
-  const entries = items.map(item => ({ ...item, parsedPrice: parseNumber(item.price) }))
+  const [shared] = useState(() => readShareQuery(window.location.search))
+  const [currentVp, setCurrentVp] = useState(shared.currentVp)
+  const [items, setItems] = useState<Item[]>(shared.items.length ? shared.items.map((item, index) => ({ ...item, id: index + 1 })) : [{ id: 1, name: "", price: "", quantity: 1 }])
+  const [nextId, setNextId] = useState(Math.max(2, shared.items.length + 1))
+  const [copiedUrl, setCopiedUrl] = useState<string | null>(null)
+  const [copyError, setCopyError] = useState(false)
+  const current = parseVpNumber(currentVp)
+  const entries = items.map(item => ({ ...item, parsedPrice: parseVpNumber(item.price) }))
   const hasInvalidPrice = entries.some(item => item.price !== "" && (item.parsedPrice === null || item.parsedPrice === 0))
   const target = entries.reduce((sum, item) => sum + (item.parsedPrice ?? 0) * item.quantity, 0)
   const needed = current === null ? 0 : Math.max(0, target - current)
   const valid = current !== null && !hasInvalidPrice && target <= 1_000_000
   const result = useMemo(() => valid && needed > 0 ? calculatePlans(needed) : null, [valid, needed])
+  const shareUrl = valid && target > 0 && current !== null ? createShareUrl(new URL(import.meta.env.BASE_URL, window.location.origin).toString(), current, items) : null
 
   function updateItem(id: number, patch: Partial<Item>) {
     setItems(previous => previous.map(item => item.id === id ? { ...item, ...patch } : item))
@@ -56,6 +107,16 @@ export function App() {
   function addItem() {
     setItems(previous => [...previous, { id: nextId, name: "", price: "", quantity: 1 }])
     setNextId(previous => previous + 1)
+  }
+  async function copyShareLink() {
+    if (!shareUrl) return
+    try {
+      await navigator.clipboard.writeText(shareUrl)
+      setCopiedUrl(shareUrl)
+      setCopyError(false)
+    } catch {
+      setCopyError(true)
+    }
   }
 
   return <main className="min-h-screen bg-[#071b29] text-[#eaf3f5]">
@@ -68,16 +129,17 @@ export function App() {
           <div className="mb-8"><Label className="mb-2 text-[15px] font-bold text-[#e9f3f4]" htmlFor="current-vp">目前擁有的 VP</Label><div className="flex h-[54px] w-full items-center gap-2 rounded-[10px] border border-[#53717b] bg-[#173946] px-3.5 text-[#92d3d1] focus-within:border-[#91e2e0] focus-within:ring-[3px] focus-within:ring-[#91e2e02b] has-[input[aria-invalid=true]]:border-[#ff8f93]"><Wallet size={22} aria-hidden="true" /><Input className="!h-full min-w-0 flex-1 !rounded-none !border-0 !bg-transparent !px-0 !text-lg !font-semibold !text-white !shadow-none !outline-none placeholder:!font-normal placeholder:!text-[#83a1aa] focus-visible:!ring-0" id="current-vp" type="number" min="0" max="1000000" step="1" inputMode="numeric" value={currentVp} aria-invalid={current === null} onChange={event => setCurrentVp(event.target.value)} /><span className="font-display text-sm font-bold text-[#aac4ca]">VP</span></div>{current === null && <p className="mt-2 text-[13px] leading-relaxed text-[#ffacb0]">請輸入 0 到 1,000,000 的整數。</p>}</div>
           <div className="mb-3 flex items-baseline justify-between gap-2"><h3 className="text-[17px] font-extrabold">想買的造型或組合包</h3><span className="text-sm text-[#9eb9c0]">{items.length} 項</span></div>
           <div className="grid gap-3">{items.map((item, index) => <Card className="!gap-0 !rounded-xl border border-[#3d5b67] !bg-[#123340] !p-3.5 !ring-0 sm:!p-4" key={item.id}>
-            <div className="mb-3 flex min-h-6 items-center justify-between text-[13px] font-extrabold text-[#91d7d4]"><span>商品 {index + 1}</span>{items.length > 1 && <Button type="button" variant="ghost" size="icon" className="!h-9 !w-9 !text-[#a9c0c7] hover:!bg-[#ff90961e] hover:!text-[#ff9096]" aria-label={`移除商品 ${index + 1}`} onClick={() => setItems(previous => previous.filter(entry => entry.id !== item.id))}><Trash2 size={19} /></Button>}</div>
-            <div className="grid grid-cols-[minmax(0,1fr)_116px] items-end gap-2.5 lg:grid-cols-[minmax(0,1.5fr)_minmax(125px,1fr)_122px] lg:gap-3">
-              <div className="col-span-full lg:col-span-1"><Label className="mb-2 text-[15px] font-bold text-[#e9f3f4]" htmlFor={`name-${item.id}`}>名稱<span className="text-xs font-normal text-[#91aeb7]">選填</span></Label><Input className="!h-[54px] w-full !rounded-[10px] !border !border-[#53717b] !bg-[#173946] !px-3.5 !text-lg !font-semibold !text-white placeholder:!font-normal placeholder:!text-[#83a1aa] focus-visible:!border-[#91e2e0] focus-visible:!ring-[3px] focus-visible:!ring-[#91e2e02b]" id={`name-${item.id}`} type="text" placeholder="例如：造型組合包" value={item.name} onChange={event => updateItem(item.id, { name: event.target.value })} /></div>
-              <div className="min-w-0"><Label className="mb-2 text-[15px] font-bold text-[#e9f3f4]" htmlFor={`price-${item.id}`}>價格</Label><div className="flex h-[54px] w-full items-center gap-2 rounded-[10px] border border-[#53717b] bg-[#173946] px-3.5 text-[#92d3d1] focus-within:border-[#91e2e0] focus-within:ring-[3px] focus-within:ring-[#91e2e02b] has-[input[aria-invalid=true]]:border-[#ff8f93]"><Input className="!h-full min-w-0 flex-1 !rounded-none !border-0 !bg-transparent !px-0 !text-lg !font-semibold !text-white !shadow-none !outline-none placeholder:!font-normal placeholder:!text-[#83a1aa] focus-visible:!ring-0" id={`price-${item.id}`} type="number" min="1" max="1000000" step="1" inputMode="numeric" placeholder="輸入 VP" value={item.price} aria-invalid={item.price !== "" && (parseNumber(item.price) === null || item.price === "0")} onChange={event => updateItem(item.id, { price: event.target.value })} /><span className="font-display text-sm font-bold text-[#aac4ca]">VP</span></div></div>
+            <div className="mb-3 flex min-h-10 items-center justify-between gap-2"><EditableItemName name={item.name} fallback={`商品 ${index + 1}`} onChange={name => updateItem(item.id, { name })} />{items.length > 1 && <Button type="button" variant="ghost" size="icon" className="!h-10 !w-10 !flex-none !text-[#a9c0c7] hover:!bg-[#ff90961e] hover:!text-[#ff9096]" aria-label={`移除商品 ${index + 1}`} onClick={() => setItems(previous => previous.filter(entry => entry.id !== item.id))}><Trash2 size={19} /></Button>}</div>
+            <div className="grid grid-cols-[minmax(0,1fr)_116px] items-start gap-2.5 lg:grid-cols-[minmax(0,1fr)_122px] lg:gap-3">
+              <div className="min-w-0"><Label className="mb-2 text-[15px] font-bold text-[#e9f3f4]" htmlFor={`price-${item.id}`}>價格</Label><div className="flex h-[54px] w-full items-center gap-2 rounded-[10px] border border-[#53717b] bg-[#173946] px-3.5 text-[#92d3d1] focus-within:border-[#91e2e0] focus-within:ring-[3px] focus-within:ring-[#91e2e02b] has-[input[aria-invalid=true]]:border-[#ff8f93]"><Input className="!h-full min-w-0 flex-1 !rounded-none !border-0 !bg-transparent !px-0 !text-lg !font-semibold !text-white !shadow-none !outline-none placeholder:!font-normal placeholder:!text-[#83a1aa] focus-visible:!ring-0" id={`price-${item.id}`} type="number" min="1" max="1000000" step="1" inputMode="numeric" placeholder="輸入 VP" value={item.price} aria-invalid={item.price !== "" && (parseVpNumber(item.price) === null || item.price === "0")} onChange={event => updateItem(item.id, { price: event.target.value })} /><span className="font-display text-sm font-bold text-[#aac4ca]">VP</span></div></div>
               <div className="min-w-0"><Label className="mb-2 text-[15px] font-bold text-[#e9f3f4]">數量</Label><div className="flex h-[54px] items-center justify-between rounded-[10px] border border-[#53717b] bg-[#173946] [&_button]:h-[50px] [&_button]:w-9 [&_button]:text-[#eaf5f5] [&_button:hover]:bg-[#2c5863] [&_output]:font-display [&_output]:text-lg [&_output]:font-bold"><Button type="button" variant="ghost" size="icon" aria-label={`商品 ${index + 1} 數量減一`} disabled={item.quantity <= 1} onClick={() => updateItem(item.id, { quantity: item.quantity - 1 })}><Minus size={18} /></Button><output aria-label={`數量 ${item.quantity}`}>{item.quantity}</output><Button type="button" variant="ghost" size="icon" aria-label={`商品 ${index + 1} 數量加一`} disabled={item.quantity >= 99} onClick={() => updateItem(item.id, { quantity: item.quantity + 1 })}><Plus size={18} /></Button></div></div>
             </div>
           </Card>)}</div>
           {hasInvalidPrice && <p className="mt-2 text-[13px] leading-relaxed text-[#ffacb0]">商品價格請填入 1 到 1,000,000 的整數 VP。</p>}
           {target > 1_000_000 && <p className="mt-2 text-[13px] leading-relaxed text-[#ffacb0]">購買總額最多可計算 1,000,000 VP。</p>}
           <Button type="button" variant="outline" className="mt-4 !h-[53px] w-full !rounded-[10px] !border !border-dashed !border-[#6b929a] !bg-[#123744] !text-[15px] !font-bold !text-[#a9e1df] hover:!bg-[#1b4853]" onClick={addItem}><Plus size={20} />加入另一件商品</Button>
+          <Button type="button" variant="outline" className="mt-3 !h-[53px] w-full !rounded-[10px] !border-[#6b929a] !bg-[#19424d] !text-[15px] !font-bold !text-[#eaf3f5] hover:!bg-[#255460]" disabled={!shareUrl} onClick={copyShareLink}><Link2 size={19} /><span aria-live="polite">{copiedUrl && copiedUrl === shareUrl ? "已複製分享連結" : "複製分享連結"}</span></Button>
+          {copyError && shareUrl && <div className="mt-3"><Label className="mb-1.5 text-sm text-[#b9d3d8]" htmlFor="share-url">無法自動複製，請手動複製連結</Label><Input id="share-url" value={shareUrl} readOnly onFocus={event => event.currentTarget.select()} className="!h-11 !border-[#53717b] !bg-[#173946] !text-sm !text-white" /></div>}
         </section>
 
         <aside className="min-w-0 rounded-2xl border border-[#3b5964] bg-[#0b2836] p-5 shadow-[0_16px_50px_#03121e30] sm:p-6 lg:p-[30px]" aria-live="polite" aria-labelledby="summary-title">
@@ -97,6 +159,7 @@ export function App() {
           <li>輸入目前持有的 VP。</li>
           <li>填入想買的造型或組合包價格。買多件時，新增商品或調整數量。</li>
           <li>先看花費最少的組合。加價不超過 NT$200 與最低花費的 10%，而且每元 VP 至少多 5%，才會顯示第二種組合。</li>
+          <li>點「複製分享連結」，就能把目前填好的內容傳給別人。</li>
         </ol>
         <details className="mt-5 rounded-xl border border-[#35525e] bg-[#0d2a38] px-4 py-3 text-sm text-[#b5cbd1]">
           <summary className="cursor-pointer font-bold text-[#eaf3f5]">台灣商店儲值面額</summary>
