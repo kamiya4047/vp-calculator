@@ -15,10 +15,20 @@ describe("儲值組合", () => {
     assert.deepEqual(result?.cheapest, { price: 1000, vp: 3300, counts: [0, 0, 0, 1, 0, 0] })
   })
 
-  it("3000 VP 商品只加價到單價更好的最近面額", () => {
+  it("小額商品的單價差距不明顯時只顯示最低花費", () => {
     const result = calculatePlans(3000)
     assert.equal(result?.cheapest.price, 1000)
-    assert.deepEqual(result?.betterValue, { price: 1500, vp: 5050, counts: [0, 0, 0, 0, 1, 0] })
+    assert.equal(result?.betterValue, null)
+  })
+
+  it("略有提升的組合不顯示，改找加價合理且提升明顯的組合", () => {
+    const result = calculatePlans(8000)
+    assert.equal(result?.cheapest.price, 2450)
+    assert.deepEqual(result?.betterValue, { price: 3000, vp: 10600, counts: [0, 0, 0, 0, 0, 1] })
+  })
+
+  it("加價過高時只顯示最低花費", () => {
+    assert.equal(calculatePlans(11000)?.betterValue, null)
   })
 
   it("已是最高單價時不推薦加價", () => {
@@ -30,6 +40,5 @@ describe("儲值組合", () => {
     assert.equal(result?.cheapest.price, 3150)
     assert.equal(result?.cheapest.vp, 11060)
     assert.equal(result?.cheapest.counts.reduce((vp, count, index) => vp + count * PACKS[index].vp, 0), 11060)
-    assert.deepEqual(result?.betterValue, { price: 6000, vp: 21200, counts: [0, 0, 0, 0, 0, 2] })
   })
 })
