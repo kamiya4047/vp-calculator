@@ -1,21 +1,18 @@
-# React + TypeScript + Vite + shadcn/ui
+# VALORANT 特務幣儲值計算器
 
-This is a template for a new Vite project with React, TypeScript, and shadcn/ui.
+輸入現有 VP 與多件想購買商品的價格，計算台灣商店面額的儲值組合。畫面提供「花費最少」及在自訂加價上限內「每元 VP 最多」兩種結果，並列出各面額數量、總金額及購買後剩餘 VP。
 
-## Adding components
-
-To add components to your app, run the following command:
+## 本機執行
 
 ```bash
-npx shadcn@latest add button
+bun install
+bun run dev
 ```
 
-This will place the ui components in the `src/components` directory.
+正式版建置：`bun run build`。檢查程式：`bun run lint`。
 
-## Using components
+## 部署
 
-To use the components in your app, import them as follows:
+網站發佈在 `gh-pages` 分支。更新網站時執行 `bun run build`，將 `dist` 內容推送到 `gh-pages` 分支，並在儲存庫 Settings → Pages 將來源設為 **Deploy from a branch**、分支選擇 `gh-pages` 的根目錄。
 
-```tsx
-import { Button } from "@/components/ui/button"
-```
+VP 面額取自需求中提供的台灣商店資料；價格若有變動，請更新 `src/lib/calculator.ts`。此網站與 Riot Games 無關。
