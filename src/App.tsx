@@ -28,7 +28,7 @@ function ResultCard({ title, plan, needed, minimum, highlight = false }: {
       {extra > 0 && <span className="whitespace-nowrap rounded-md bg-[#3b4c51] px-2 py-1.5 text-xs font-bold text-[#f6c7c8]">多花 NT$ {format(extra)}</span>}
     </div>
     <div className="my-3 flex items-baseline gap-2 font-display text-[42px] leading-tight font-bold text-white sm:text-[49px]"><span className="text-xl text-[#acc8cf]">NT$</span>{format(plan.price)}</div>
-    <div className="flex flex-wrap gap-x-5 gap-y-1 border-b border-[#44616b] pb-4 text-[13px] text-[#a9c2c9]"><span>可得 <strong className="font-bold text-[#dff2f2]">{format(plan.vp)} VP</strong></span><span>買完剩 <strong className="font-bold text-[#dff2f2]">{format(plan.vp - needed)} VP</strong></span><span>每元可得 <strong className="font-bold text-[#dff2f2]">{(plan.vp / plan.price).toFixed(2)} VP</strong></span></div>
+    <div className="flex flex-wrap gap-x-5 gap-y-1 border-b border-[#44616b] pb-4 text-[13px] text-[#a9c2c9]"><span>可得 <strong className="font-bold text-[#dff2f2]">{format(plan.vp)} VP</strong></span><span>買完剩 <strong className="font-bold text-[#dff2f2]">{format(plan.vp - needed)} VP</strong></span><span>每元可得 <strong className="font-bold text-[#dff2f2]">{(plan.vp / plan.price).toFixed(3)} VP</strong></span></div>
     <div className="divide-y divide-[#35535f]" aria-label="需要購買的儲值面額">
       {PACKS.map((pack, index) => plan.counts[index] > 0 && <div className="flex items-center justify-between gap-2.5 py-3 font-display text-[15px] font-semibold text-[#e4f0f1]" key={pack.vp}>
         <span className="inline-flex items-center gap-2"><VpMark small />{format(pack.vp)} VP <span className="text-[#a8c2c8]">× {plan.counts[index]}</span></span>
@@ -49,7 +49,6 @@ export function App() {
   const needed = current === null ? 0 : Math.max(0, target - current)
   const valid = current !== null && !hasInvalidPrice && target <= 1_000_000
   const result = useMemo(() => valid && needed > 0 ? calculatePlans(needed) : null, [valid, needed])
-  const valueDifferent = result && result.bestValue.price !== result.cheapest.price
 
   function updateItem(id: number, patch: Partial<Item>) {
     setItems(previous => previous.map(item => item.id === id ? { ...item, ...patch } : item))
@@ -87,7 +86,7 @@ export function App() {
             <div className="mb-4 grid grid-cols-[1fr_auto_1fr] items-center gap-2 rounded-xl border border-[#365964] bg-[#153a48] px-3 py-4 sm:px-5"><div className="flex flex-col gap-1.5"><span className="text-[13px] text-[#a8c0c6]">購買總額</span><strong className="whitespace-nowrap font-display text-[21px] font-bold sm:text-[26px]">{format(target)} <small className="text-xs sm:text-sm">VP</small></strong></div><ArrowRight size={20} aria-hidden="true" /><div className="flex flex-col items-end gap-1.5 text-right"><span className="text-[13px] text-[#a8c0c6]">還需要</span><strong className="whitespace-nowrap font-display text-[21px] font-bold text-[#8ee5e0] sm:text-[26px]">{format(needed)} <small className="text-xs sm:text-sm">VP</small></strong></div></div>
             {needed === 0 ? <div className="px-5 py-10 text-center"><div className="mx-auto mb-5 grid h-[75px] w-[75px] place-items-center rounded-full border-2 border-[#82ddd5] text-[39px] text-[#9bf0e7]">✓</div><h3 className="mb-2 text-[21px] font-bold">現有 VP 足夠</h3><p className="text-[15px] leading-relaxed text-[#acc4ca]">買完剩 <strong className="text-[#e3f5f3]">{format((current ?? 0) - target)} VP</strong>。</p></div> : result && <>
               <ResultCard title="花費最少" plan={result.cheapest} needed={needed} minimum={result.cheapest.price} highlight />
-              {valueDifferent && <ResultCard title="每元可得最多 VP" plan={result.bestValue} needed={needed} minimum={result.cheapest.price} />}
+              {result.betterValue && <ResultCard title="單價更划算" plan={result.betterValue} needed={needed} minimum={result.cheapest.price} />}
             </>}
           </>}
         </aside>
@@ -97,7 +96,7 @@ export function App() {
         <ol className="list-decimal space-y-2 pl-6 text-sm leading-7 text-[#c2d4d9]">
           <li>輸入目前持有的 VP。</li>
           <li>填入想買的造型或組合包價格。買多件時，新增商品或調整數量。</li>
-          <li>比較花費最少與每元可得最多 VP 的儲值組合。</li>
+          <li>先看花費最少的組合；若有單價更划算的組合，會列出加價最少的一種。</li>
         </ol>
         <details className="mt-5 rounded-xl border border-[#35525e] bg-[#0d2a38] px-4 py-3 text-sm text-[#b5cbd1]">
           <summary className="cursor-pointer font-bold text-[#eaf3f5]">台灣商店儲值面額</summary>

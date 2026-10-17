@@ -8,7 +8,7 @@ export const PACKS = [
 ] as const
 
 export type Plan = { price: number; vp: number; counts: number[] }
-export type Calculation = { cheapest: Plan; bestValue: Plan }
+export type Calculation = { cheapest: Plan; betterValue: Plan | null }
 
 const COST_UNIT = 50
 
@@ -48,6 +48,15 @@ export function calculatePlans(neededVp: number): Calculation | null {
   }
   if (cheapestCost < 0) return null
 
+  let betterCost = -1
+  for (let cost = cheapestCost + 1; cost <= maxUnits; cost++) {
+    if (bestVp[cost] < neededVp) continue
+    if (bestVp[cost] * cheapestCost > bestVp[cheapestCost] * cost) {
+      betterCost = cost
+      break
+    }
+  }
+
   function buildPlan(cost: number): Plan {
     const counts = PACKS.map(() => 0)
     let remaining = cost
@@ -62,10 +71,6 @@ export function calculatePlans(neededVp: number): Calculation | null {
 
   return {
     cheapest: buildPlan(cheapestCost),
-    bestValue: {
-      price: bestPackCount * bestPack.price,
-      vp: bestPackCount * bestPack.vp,
-      counts: PACKS.map((_, index) => index === bestPackIndex ? bestPackCount : 0),
-    },
+    betterValue: betterCost < 0 ? null : buildPlan(betterCost),
   }
 }
