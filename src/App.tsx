@@ -27,7 +27,7 @@ function EditableItemName({ name, fallback, onChange }: { name: string; fallback
     aria-label={`${fallback}名稱（選填）`}
     aria-multiline="false"
     data-placeholder={fallback}
-    className="block min-h-10 min-w-0 flex-1 cursor-text rounded-md px-1 py-2 text-[15px] leading-6 font-bold text-[#91d7d4] hover:bg-[#ffffff0a] focus:bg-[#173946] focus:outline-2 focus:outline-[#88d9dd] empty:before:text-[#91d7d4] empty:before:content-[attr(data-placeholder)]"
+    className="block min-h-10 min-w-0 flex-1 cursor-text rounded-md p-1 text-[15px] leading-8 font-bold text-[#91d7d4] hover:bg-[#ffffff0a] focus:bg-[#173946] focus:outline-2 focus:outline-[#88d9dd] empty:before:text-[#91d7d4] empty:before:content-[attr(data-placeholder)]"
     onInput={event => {
       const value = event.currentTarget.textContent ?? ""
       if (!value) event.currentTarget.replaceChildren()
