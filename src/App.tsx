@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card } from "@/components/ui/card"
-import { calculatePlans, PACKS, type Plan } from "@/lib/calculator"
+import { affordableGoal, calculatePlans, PACKS, type Plan } from "@/lib/calculator"
 import { createShareUrl, parseVpNumber, readShareQuery, type ShareItem } from "@/lib/share"
 
 type Item = ShareItem & { id: number }
@@ -69,6 +69,7 @@ function ResultCard({ title, plan, needed, minimum, highlight = false, subdued =
   title: string; plan: Plan; needed: number; minimum: number; highlight?: boolean; subdued?: boolean
 }) {
   const extra = plan.price - minimum
+  const goal = affordableGoal(plan.vp - needed)
   return <Card role="region" className={`mt-4 !gap-0 !rounded-xl border !p-4 !ring-0 sm:!p-5 ${highlight ? "border-[#ea7479] bg-[linear-gradient(135deg,#1e424d,#15343f)]" : "border-[#45626d] bg-[#123542]"} ${subdued ? "opacity-70" : ""}`} aria-label={title}>
     <div className="flex items-start justify-between gap-3">
       <h3 className="text-[19px] font-extrabold">{title}</h3>
@@ -76,6 +77,7 @@ function ResultCard({ title, plan, needed, minimum, highlight = false, subdued =
     </div>
     <div className="my-3 flex items-baseline gap-2 font-display text-[42px] leading-tight font-bold text-white sm:text-[49px]"><span className="text-xl text-[#acc8cf]">NT$</span>{format(plan.price)}</div>
     <div className="flex flex-wrap gap-x-5 gap-y-1 border-b border-[#44616b] pb-4 text-[13px] text-[#a9c2c9]"><span>可得 <strong className="font-bold text-[#dff2f2]">{format(plan.vp)} 特務幣</strong></span><span>買完剩 <strong className="font-bold text-[#dff2f2]">{format(plan.vp - needed)} 特務幣</strong></span><span>每元可得 <strong className="font-bold text-[#dff2f2]">{(plan.vp / plan.price).toFixed(3)} 特務幣</strong></span></div>
+    {goal && <p className="mt-3 rounded-md bg-[#244854] px-3 py-2 text-sm leading-relaxed text-[#d9eeec]">餘額達到 {goal.label}的常見價位（約 {format(goal.vp)} 特務幣）</p>}
     <div className="divide-y divide-[#35535f]" aria-label="需要購買的儲值面額">
       {PACKS.map((pack, index) => plan.counts[index] > 0 && <div className="flex flex-wrap items-center justify-between gap-x-2.5 gap-y-1 py-3 font-display text-[15px] font-semibold text-[#e4f0f1]" key={pack.vp}>
         <span className="inline-flex items-center gap-2"><VpMark small />{format(pack.vp)} 特務幣 <span className="text-[#a8c2c8]">× {plan.counts[index]}</span></span>
@@ -158,13 +160,22 @@ export function App() {
         <ol className="list-decimal space-y-2 pl-6 text-sm leading-7 text-[#c2d4d9]">
           <li>輸入目前持有的特務幣。</li>
           <li>填入想買的造型或組合包價格。買多件時，新增商品或調整數量。</li>
-          <li>先看花費最少的組合。下方會列出其他買法；加價較多或單價差異不大時，會以較淡的樣式顯示。</li>
+          <li>先看花費最少的組合。其他買法會考慮買完的餘額能否用於通行證或常見造型；加價較多或單價差異不大時，會以較淡的樣式顯示。</li>
           <li>點「複製分享連結」，就能把目前填好的內容傳給別人。</li>
         </ol>
         <details className="mt-5 rounded-xl border border-[#35525e] bg-[#0d2a38] px-4 py-3 text-sm text-[#b5cbd1]">
           <summary className="cursor-pointer font-bold text-[#eaf3f5]">台灣商店儲值面額</summary>
           <ul className="mt-3 grid gap-x-6 gap-y-1 sm:grid-cols-2 lg:grid-cols-3">{PACKS.map(pack => <li key={pack.vp}>{format(pack.vp)} 特務幣＝NT$ {format(pack.price)}</li>)}</ul>
           <p className="mt-3 text-xs leading-relaxed text-[#90afb8]">實際價格請以遊戲內結帳畫面為準。</p>
+        </details>
+        <details className="mt-3 rounded-xl border border-[#35525e] bg-[#0d2a38] px-4 py-3 text-sm text-[#b5cbd1]">
+          <summary className="cursor-pointer font-bold text-[#eaf3f5]">常見造型與通行證價位</summary>
+          <ul className="mt-3 space-y-1.5 leading-relaxed">
+            <li>通行證升級：約 1,000 特務幣</li>
+            <li>武器造型：奢華 1,275、尊爵 1,775、限定 2,175、究極 2,475 特務幣</li>
+            <li>近戰造型：奢華 2,550；尊爵 4,350；限定 1,750／2,550／3,550／4,350／5,440；究極 2,550／3,550／4,950／5,350／5,950 特務幣</li>
+          </ul>
+          <p className="mt-3 text-xs leading-relaxed text-[#90afb8]">這些是試算參考價位，實際價格請以遊戲內顯示為準。</p>
         </details>
       </section>
       <footer className="border-t border-[#274653] py-6 text-xs leading-relaxed text-[#a7bec5]">

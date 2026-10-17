@@ -1,6 +1,6 @@
 import assert from "node:assert/strict"
 import { describe, it } from "node:test"
-import { calculatePlans, PACKS } from "./calculator"
+import { affordableGoal, calculatePlans, PACKS } from "./calculator"
 
 describe("儲值組合", () => {
   it("5,050 特務幣面額為 NT$1,490", () => {
@@ -19,11 +19,18 @@ describe("儲值組合", () => {
     assert.deepEqual(result?.cheapest, { price: 1000, vp: 3300, counts: [0, 0, 0, 1, 0, 0] })
   })
 
-  it("小額商品仍有另一種買法，且不會跳到 10,600 特務幣面額", () => {
+  it("3,000 特務幣商品的其他買法留下足夠購買尊爵武器的餘額", () => {
     const result = calculatePlans(3000)
     assert.equal(result?.cheapest.price, 1000)
-    assert.deepEqual(result?.alternative, { price: 1150, vp: 3760, counts: [1, 0, 0, 1, 0, 0] })
+    assert.deepEqual(result?.alternative, { price: 1490, vp: 5050, counts: [0, 0, 0, 0, 1, 0] })
+    assert.equal(affordableGoal(result!.alternative.vp - 3000)?.vp, 1775)
     assert.equal(result?.betterValue, null)
+  })
+
+  it("有更省的通行證餘額方案時不為了造型多花錢", () => {
+    const result = calculatePlans(5500)
+    assert.equal(result?.alternative.price, 1990)
+    assert.equal(affordableGoal(result!.alternative.vp - 5500)?.vp, 1000)
   })
 
   it("加價 560 元即使單價提升明顯也不列為推薦", () => {
@@ -35,7 +42,8 @@ describe("儲值組合", () => {
   it("加價 210 元超過上限時淡化其他買法", () => {
     const result = calculatePlans(9000)
     assert.equal(result?.cheapest.price, 2790)
-    assert.deepEqual(result?.alternative, { price: 2980, vp: 10100, counts: [0, 0, 0, 0, 2, 0] })
+    assert.deepEqual(result?.alternative, { price: 3000, vp: 10600, counts: [0, 0, 0, 0, 0, 1] })
+    assert.equal(affordableGoal(result!.alternative.vp - 9000)?.vp, 1275)
     assert.equal(result?.betterValue, null)
   })
 
@@ -50,13 +58,13 @@ describe("儲值組合", () => {
   it("加價過高時仍提供較接近的其他買法", () => {
     const result = calculatePlans(11000)
     assert.equal(result?.betterValue, null)
-    assert.equal(result?.alternative.price, 3300)
+    assert.equal(result?.alternative.price, 3500)
   })
 
   it("已是最高單價時仍提供其他買法，但不推薦加價", () => {
     const result = calculatePlans(10600)
     assert.equal(result?.betterValue, null)
-    assert.deepEqual(result?.alternative, { price: 3150, vp: 11060, counts: [1, 0, 0, 0, 0, 1] })
+    assert.deepEqual(result?.alternative, { price: 3450, vp: 11990, counts: [1, 1, 0, 0, 0, 1] })
   })
 
   it("大額目標可混合多個面額", () => {

@@ -7,11 +7,35 @@ export const PACKS = [
   { vp: 10600, price: 3000, base: 9200, bonus: 1400 },
 ] as const
 
+export const LEFTOVER_GOALS = [
+  { vp: 1000, label: "通行證升級" },
+  { vp: 1275, label: "奢華武器造型" },
+  { vp: 1750, label: "部分限定近戰造型" },
+  { vp: 1775, label: "尊爵武器造型" },
+  { vp: 2175, label: "限定武器造型" },
+  { vp: 2475, label: "究極武器造型" },
+  { vp: 2550, label: "部分近戰造型" },
+  { vp: 3550, label: "部分近戰造型" },
+  { vp: 4350, label: "部分近戰造型" },
+  { vp: 4950, label: "部分究極近戰造型" },
+  { vp: 5350, label: "部分究極近戰造型" },
+  { vp: 5440, label: "部分限定近戰造型" },
+  { vp: 5950, label: "部分究極近戰造型" },
+] as const
+
+export function affordableGoal(leftoverVp: number) {
+  for (let index = LEFTOVER_GOALS.length - 1; index >= 0; index--) {
+    if (LEFTOVER_GOALS[index].vp <= leftoverVp) return LEFTOVER_GOALS[index]
+  }
+  return null
+}
+
 export type Plan = { price: number; vp: number; counts: number[] }
 export type Calculation = { cheapest: Plan; alternative: Plan; betterValue: Plan | null }
 
 const COST_UNIT = 10
 const MAX_EXTRA_COST = 200
+const MAX_GOAL_EXTRA_COST = 500
 const MAX_EXTRA_COST_PERCENT = 10
 const MIN_RATE_GAIN_PERCENT = 5
 
@@ -24,7 +48,7 @@ export function calculatePlans(neededVp: number): Calculation | null {
   })
   const bestPack = PACKS[bestPackIndex]
   const bestPackCount = Math.ceil(neededVp / bestPack.vp)
-  const maxUnits = (bestPackCount * bestPack.price + PACKS[0].price) / COST_UNIT
+  const maxUnits = (bestPackCount * bestPack.price + MAX_GOAL_EXTRA_COST) / COST_UNIT
   const bestVp = new Float64Array(maxUnits + 1)
   const previousPack = new Int8Array(maxUnits + 1).fill(-1)
   bestVp.fill(-1)
@@ -51,14 +75,16 @@ export function calculatePlans(neededVp: number): Calculation | null {
   }
   if (cheapestCost < 0) return null
 
-  let betterCost = -1
+  const currentGoalVp = affordableGoal(bestVp[cheapestCost] - neededVp)?.vp ?? 0
+  let goalCost = -1
+  let goalGain = 0
   for (let cost = cheapestCost + 1; cost <= maxUnits; cost++) {
-    if ((cost - cheapestCost) * COST_UNIT > MAX_EXTRA_COST) break
-    if (cost * 100 > cheapestCost * (100 + MAX_EXTRA_COST_PERCENT)) break
-    if (bestVp[cost] < neededVp) continue
-    if (bestVp[cost] * cheapestCost * 100 >= bestVp[cheapestCost] * cost * (100 + MIN_RATE_GAIN_PERCENT)) {
-      betterCost = cost
-      break
+    if ((cost - cheapestCost) * COST_UNIT > MAX_GOAL_EXTRA_COST) break
+    const gain = (affordableGoal(bestVp[cost] - neededVp)?.vp ?? 0) - currentGoalVp
+    if (gain <= 0) continue
+    if (goalCost < 0 || gain * (goalCost - cheapestCost) > goalGain * (cost - cheapestCost)) {
+      goalCost = cost
+      goalGain = gain
     }
   }
 
@@ -75,7 +101,7 @@ export function calculatePlans(neededVp: number): Calculation | null {
       break
     }
   }
-  const alternativeCost = betterCost >= 0 ? betterCost : nextBetterRateCost >= 0 ? nextBetterRateCost : bestMarginalCost
+  const alternativeCost = goalCost >= 0 ? goalCost : nextBetterRateCost >= 0 ? nextBetterRateCost : bestMarginalCost
   if (alternativeCost < 0) throw new Error("找不到其他儲值組合")
 
   function buildPlan(cost: number): Plan {
@@ -90,9 +116,12 @@ export function calculatePlans(neededVp: number): Calculation | null {
     return { price: cost * COST_UNIT, vp: bestVp[cost], counts }
   }
 
-  return {
-    cheapest: buildPlan(cheapestCost),
-    alternative: buildPlan(alternativeCost),
-    betterValue: betterCost < 0 ? null : buildPlan(betterCost),
-  }
+  const cheapest = buildPlan(cheapestCost)
+  const alternative = buildPlan(alternativeCost)
+  const extra = alternative.price - cheapest.price
+  const betterValue = extra <= MAX_EXTRA_COST
+    && alternative.price * 100 <= cheapest.price * (100 + MAX_EXTRA_COST_PERCENT)
+    && alternative.vp * cheapest.price * 100 >= cheapest.vp * alternative.price * (100 + MIN_RATE_GAIN_PERCENT)
+
+  return { cheapest, alternative, betterValue: betterValue ? alternative : null }
 }
